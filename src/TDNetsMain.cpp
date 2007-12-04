@@ -81,13 +81,20 @@ int main (int argc, char * const argv[]) {
 //	NodeFactory::NodeType typeofNode=NodeFactory::OneStep;				//activate(float P) :: returns P truncated to be in [0,1]
 	
 	//This will create a TDNet Learning Agent/Algorithm
+	
+//By default this code builds a symmetric network.  This controls the depth
+	unsigned int tdNetworkDepth=3;
+//Add features into the feature vector for histories of this length
+	unsigned int historyFeatureLength=0;
+//Create seperate function approximator at each  node for each unique history of this length
+	unsigned int historyWeightSetLength=2;
 	Alg=new TDNetAlgorithm(Env->getActionCount(),
 						   Env->getObservationCount(),
-						   3,
+						   tdNetworkDepth,
 						   typeofNode,
 						   historyStartParam,
-						   0,
-						   2,
+						   historyFeatureLength,
+						   historyWeightSetLength,
 						   useMCTraces,
 						   alpha);	
 
