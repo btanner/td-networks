@@ -42,48 +42,68 @@
 #include "TDNetAlgorithm.h"
 
 
-/*This code needs to be updated to not have all the POMDP conversion stuff in it */
-
 using std::cout;
 using std::endl;
 using std::vector;
 using std::string;
 
+//This runs an algorithm for a fixed number of steps
 float runExperiment(int totalSteps, int stepsPerBin, SolutionMethod *Alg,Environment *Env,bool printOutput=false);
+//This runs an experiment to an error tolerance
 float runExperimentTol(float tol, int stepsPerBin, SolutionMethod *Alg,Environment *Env,bool printOutput,int &numSteps, int &lastNumWrong);
 
 int main (int argc, char * const argv[]) {
 	int totalSteps=1000000;
 	int stepsPerBin=25000;
-	cout<<"Starting program"<<endl;
 	
+	//Pointers for the Environment we'll be in and the solution method we'll be using
 	Environment *Env=NULL;
 	SolutionMethod *Alg=NULL;
 
+	//This creates a new 8-state ring world environment
 	Env = new ringWorldEnv(8);
 	
+	//When using TD Nets + history if length k (and k is odd), it matters if you are starting the history on actions or observations
+	//This can be 'a' or 'o'
 	char historyStartParam='a';
+	
+	//Learning rate
 	float alpha=.5f;
 	
+	//Use Monte Carlo networks with eligibility traces.  If you set this to false you'll use Vanilla TD-Networks
 	bool useMCTraces=true;
-//	NodeFactory::NodeType typeofNode=NodeFactory::CrossEntropyOneStep;
-	NodeFactory::NodeType typeofNode=NodeFactory::SigmoidOneStep;
-//	NodeFactory::NodeType typeofNode=NodeFactory::OneStep;
+
+//Choose what types of nodes you'll be using.  I can't remember if you can mix and match.
+//The literature out there used SigmoidOneStep Nodes.  We later found (but never thoroughly investigated that cross entropy nodes were better)
+//They just differ in their activation function and of course the inverse activation
+//	NodeFactory::NodeType typeofNode=NodeFactory::CrossEntropyOneStep; 	//activate(float P){return(1.0/(1.0+exp(-P)));}
+	NodeFactory::NodeType typeofNode=NodeFactory::SigmoidOneStep;		//activate(float P){return(P*(1.0f-P));}
+//	NodeFactory::NodeType typeofNode=NodeFactory::OneStep;				//activate(float P) :: returns P truncated to be in [0,1]
 	
-				Alg=new TDNetAlgorithm(Env->getActionCount(),
-									   Env->getObservationCount(),
-									   3,
-									   typeofNode,
-									   historyStartParam,
-									   0,
-									   2,
-									   useMCTraces,
-									   alpha);	
+	//This will create a TDNet Learning Agent/Algorithm
+	Alg=new TDNetAlgorithm(Env->getActionCount(),
+						   Env->getObservationCount(),
+						   3,
+						   typeofNode,
+						   historyStartParam,
+						   0,
+						   2,
+						   useMCTraces,
+						   alpha);	
+
 				int lastNumWrong,numSteps;
 				float results=runExperimentTol(0.01f,stepsPerBin,Alg,Env,true,numSteps,lastNumWrong);
 				//	cout<<"Error with weight Feature length: "<<historyFeatureLength<<" weight Set length: "<<historyWeightsetLength<<" and depth: "<<Depth<< " is: "<<results<<endl;
 				//	cout<<" Last wrong "<<lastNumWrong<<" number of steps "<<numSteps<<endl;
 				exit(1);
+				
+//
+//
+//	The code below this is used to run multiple experiments with different parameters and then save them to some files
+//	I can't remember exactly how it works.
+//
+//
+				
 				ofstream allResultsFile;
 				ofstream bestResultsFile;
 				ofstream batchesFile;
@@ -156,10 +176,15 @@ int main (int argc, char * const argv[]) {
 }
 
 float runExperiment(int totalSteps, int stepsPerBin, SolutionMethod *Alg,Environment *Env,bool printOutput){
+//You can write code so that you can load previous experiments from a file and see how they do
 	//SolutionMethod* Alg=SolutionMethod::loadFromFile("data.dat");
+
+
+//The current action and observation
 	int a;
 	int o;
 	
+//The error that observed between prediction and observation
 	float observedError=0.0f;
 	
 	float finalBinError=0.0f;
@@ -168,27 +193,35 @@ float runExperiment(int totalSteps, int stepsPerBin, SolutionMethod *Alg,Environ
 	for(int i=0;i<totalSteps;i++){
 		t++;
 		
+//This code prints out the error at regular intervals
 		if(i%stepsPerBin==0){
 			if(printOutput){
 				cout<<"OE: "<<observedError/float(stepsPerBin)<<"\tbin: "<<i/stepsPerBin<<endl;
 			}
 			finalBinError=observedError/float(stepsPerBin);
 			observedError=0.0f;
+//Apparently we half the step size at this interval.  I didn't expect that.  You can try without this
 			Alg->setStepSize(Alg->getStepSize()*.5);
 		}
 		
+//Get details about this step from the environment (we actually advance it to the next state later)
+//We're trying to learn to predict the environment, not control it, so we ask the environment for the action
+//This method has no side effect, so you can forgo this and use whatever action selection mechanism you want
 		a=Env->nextAction();		
 		o=Env->getObservation(a);
 		
 		
+//Save results occasionally
 		if(i%(stepsPerBin*25)==0&&i>0){
 			if(DET)
 				cout<<"Saving to file..."<<endl;
 			Alg->saveToFile("b2bLearning.dat");
 		}
 		
+//Looks like our performance criterion is absolute error
 		observedError+=fabs(1.0f-Alg->getPForAO(a,o));
 		
+//Advance the Alg and Env to the next state
 		Alg->updateState(a,o);
 		Env->nextState(a,o);
 		
