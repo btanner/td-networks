@@ -61,7 +61,7 @@ int main (int argc, char * const argv[]) {
 	SolutionMethod *Alg=NULL;
 
 	//This creates a new 8-state ring world environment
-	Env = new ringWorldEnv(8);
+	Env = new ringWorldEnv(5);
 	
 	//When using TD Nets + history if length k (and k is odd), it matters if you are starting the history on actions or observations
 	//This can be 'a' or 'o'
@@ -92,7 +92,7 @@ int main (int argc, char * const argv[]) {
 						   alpha);	
 
 				int lastNumWrong,numSteps;
-				float results=runExperimentTol(0.01f,stepsPerBin,Alg,Env,true,numSteps,lastNumWrong);
+				float results=runExperimentTol(0.0001f,stepsPerBin,Alg,Env,true,numSteps,lastNumWrong);
 				//	cout<<"Error with weight Feature length: "<<historyFeatureLength<<" weight Set length: "<<historyWeightsetLength<<" and depth: "<<Depth<< " is: "<<results<<endl;
 				//	cout<<" Last wrong "<<lastNumWrong<<" number of steps "<<numSteps<<endl;
 				exit(1);
