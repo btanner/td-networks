@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------
 
 # Name of build target.
-TARGET := foobar
+TARGET := tdNets
 
 # Source directories (delimited with spaces).
 BUILD_VPATH := src
