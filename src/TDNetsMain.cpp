@@ -29,7 +29,7 @@
 #include "TwoDimensionalEnv.h"
 #include "TwoDimensionalMap.h"
 #include "History.h"
-#include "node.h"
+#include "Node.h"
 #include "TraceNode.h"
 #include "Input.h"
 #include "predictionPointerFactory.h"
