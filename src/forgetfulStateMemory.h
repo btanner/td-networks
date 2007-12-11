@@ -37,10 +37,10 @@ public:
 private:
 
 	vector<Input *> inputPointers;
-	int currentSize;
 	int totalSize;
 	int head;
 	int tail;
+	int currentSize;
 };
 
 inline int forgetfulStateMemory::size() const {
@@ -48,4 +48,3 @@ inline int forgetfulStateMemory::size() const {
 }
 
 #endif
-

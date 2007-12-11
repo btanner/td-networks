@@ -30,7 +30,7 @@ public:
 	
 	HistoryAlgorithm(int aCount, int oCount, int hLength);
 	HistoryAlgorithm(ifstream &i);
-	~HistoryAlgorithm();
+	virtual ~HistoryAlgorithm();
 	
 	virtual void Save(ofstream &o) const;
 	
@@ -40,6 +40,7 @@ public:
 protected:
 	/*Parameters we'll need to save.*/
 	int historyLength;
+	int t;
 	int actionCount;
 	int observationCount;
 	float *numH;
@@ -47,7 +48,6 @@ protected:
 	
 	private:
 	/*Parameters we'll need to recreate*/
-	int t;
 //	float alpha;
 
 	//Create the history structure

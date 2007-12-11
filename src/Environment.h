@@ -25,7 +25,7 @@ using std::string;
 class Environment : public Printable{
 public:
 	Environment(int observationCount, int actionCount);
-	~Environment();
+	virtual ~Environment();
 
 	virtual int getObservation(int Action)=0;
 	virtual void nextState(int Action,int Observation)=0;
@@ -42,8 +42,8 @@ public:
 	
 	
 protected:
-	int actionCount;
 	int observationCount;
+	int actionCount;
 };
 
 

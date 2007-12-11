@@ -36,6 +36,7 @@ class Node;
 class Weights : public  Printable {
 public:
 	Weights();
+	virtual ~Weights();
 
 	virtual string toString() const;
 

@@ -34,7 +34,7 @@ public:
 };
 
 	SolutionMethod(SolutionType theType, float stepSizeVal);
-	~SolutionMethod();
+	virtual ~SolutionMethod();
 	
 	virtual void updateState(int action, int observation)=0;
 	virtual float getPForAO(int action, int observation)const=0;

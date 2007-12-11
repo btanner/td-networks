@@ -41,6 +41,7 @@ public:
 	TDNet(NodeFactory F,int depth=1, int actionCount=1, int obsCount=2);
 	TDNet();
 	TDNet(NodeFactory F, ifstream &i,vector<Node *> &allNodes);
+	virtual ~TDNet();
 	void addToGlobalVector(vector<Node *> &allNodes);
 	void hookNodesToEachOther();
 	void initAllWeights();

@@ -28,9 +28,9 @@ class Input{
 public:
 	static int timesInited;
 	int timeStep;
+	vector<float> *yt;
 	int historyNumber;
 	int AOSelector;
-	vector<float> *yt;
 	Input(int timeStepValue, History const &H, vector<float> *predictions);
 //Used now that we are basically making dummy inputs
 	Input();

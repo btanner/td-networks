@@ -40,10 +40,10 @@ public:
 private:
 		
 	vector<TraceNode *> tracePointers;
-	int currentSize;
 	int totalSize;
 	int head;
 	int tail;
+	int currentSize;
 };
 
 inline int forgetfulTraceMemory::size() const {
@@ -57,4 +57,3 @@ inline void forgetfulTraceMemory::clear(){
 }
 
 #endif
-

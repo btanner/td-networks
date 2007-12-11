@@ -120,7 +120,7 @@ void TDNetAlgorithm::updateState(int a, int o){
 	
 	
 	//Calculate the new predictions
-	for(int j=0;j<allNodes.size();j++){
+	for(unsigned int j=0;j<allNodes.size();j++){
 		(*y_t)[j]=(allNodes[j]->calcPrediction(H,y_tminus1));
 	}
 	
@@ -172,7 +172,7 @@ void TDNetAlgorithm::updateState(int a, int o){
 	}//End of passing through the traces
 	
 	//Put new stuff in with the traces
-	for(int i=0;i<allNodes.size();i++){
+	for(unsigned int i=0;i<allNodes.size();i++){
 		newTraces->setAtEnd(allNodes[i], allNodes[i], t, (*y_t)[i],(*y_t)[i], stepSize);
 	}
 	

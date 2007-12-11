@@ -44,7 +44,7 @@ void Weights::updateWeights(float alphaDelta, const Input *theInput){
 	//Then do the history	
 	historyWeights[theInput->historyNumber]+=alphaDelta;
 
-	for(int i=0;i<predictionWeights.size();i++){
+	for(unsigned int i=0;i<predictionWeights.size();i++){
 		predictionWeights[i]+=alphaDelta*(*theInput->yt)[pWLookup[i]->globalIndex];
 	}
 }
@@ -76,12 +76,14 @@ void Weights::initWeights(){
 	int totalWeights=2+predictionWeights.size();
 	float initWeight=0.0f/((float)(totalWeights));
 	biasWeight=initWeight;
-	for(int i=0;i<historyWeights.size();i++)
+	for(unsigned int i=0;i<historyWeights.size();i++)
 		historyWeights[i]=initWeight;
-	for(int i=0;i<predictionWeights.size();i++)
+	for(unsigned int i=0;i<predictionWeights.size();i++)
 		predictionWeights[i]=initWeight;
 }
 Weights::Weights(){}
+
+Weights::~Weights(){}
 
 void Weights::addPredictionWeight(Node *theNode){
 	predictionWeights.push_back(.1f);
@@ -98,14 +100,14 @@ void Weights::setupHistoryWeights(int historySize){
 
 void Weights::Save(ofstream &o) const{	
 	o<<" "<<historyWeights.size();
-	for(int i=0;i<historyWeights.size();i++)
+	for(unsigned int i=0;i<historyWeights.size();i++)
 		o<<" "<<historyWeights[i];
 	o<<" "<<predictionWeights.size();
-	for(int i=0;i<predictionWeights.size();i++)
+	for(unsigned int i=0;i<predictionWeights.size();i++)
 		o<<" "<<predictionWeights[i];
 	o<<" "<<biasWeight;
 	o<<" "<<pWLookup.size();
-	for(int i=0;i<pWLookup.size();i++)
+	for(unsigned int i=0;i<pWLookup.size();i++)
 		o<<" "<<pWLookup[i]->globalIndex;
 	
 		
@@ -135,7 +137,7 @@ void Weights::Load(ifstream &i) {
 }
 
 void Weights::fixLinksAfterLoadFromFile(vector<Node *> &allNodes){
-	for(int i=0;i<__pwIDs.size();i++){
+	for(unsigned int i=0;i<__pwIDs.size();i++){
 		pWLookup[i]=allNodes[__pwIDs[i]];
 	}
 }

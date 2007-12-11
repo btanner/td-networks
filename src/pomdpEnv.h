@@ -28,7 +28,7 @@ using std::string;
 class pomdpEnv : public Environment{
 public:
 	pomdpEnv(int stateCount,int observationCount, int actionCount);
-	~pomdpEnv();
+	virtual ~pomdpEnv();
 	virtual string toString() const;
 	virtual int getObservation(int Action);
 

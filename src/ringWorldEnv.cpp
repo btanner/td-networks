@@ -49,5 +49,3 @@ ringWorldEnv::ringWorldEnv(int Size) :
 			}
 		
 }
-		
-			

@@ -74,14 +74,4 @@ inline bool TraceNode::checkCondition(int a) const{
 	return(currentTarget->getActCond()==-1|currentTarget->getActCond()==a);
 }
 
-
-
-
-
-
-
-
-
-
-
 #endif

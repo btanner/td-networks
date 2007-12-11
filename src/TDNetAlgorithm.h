@@ -35,7 +35,7 @@ public:
 	
 	TDNetAlgorithm(int actionCount, int observationCount, int nDepth, NodeFactory::NodeType typeToUse, char hStart, int hFLength, int hWLength, bool useMCTraces, float alpha);
 	TDNetAlgorithm(ifstream &i, float stepSizeVal);
-	~TDNetAlgorithm();
+	virtual ~TDNetAlgorithm();
 	
 	virtual void Save(ofstream &o) const;
 
@@ -47,12 +47,13 @@ public:
 protected:
 	/*Parameters we'll need to save.*/
 	int netDepth;
-	int historyFeatureLength;
-	int historyWeightsetLength;
-	char historyStartParameter;
-	bool useMCTraces;
 	NodeFactory::NodeType nodeTypeToUse;
 	TDNet theNet;
+	char historyStartParameter;
+	int historyFeatureLength;
+	int historyWeightsetLength;
+	bool useMCTraces;
+
 
 	private:
 	/*Parameters we'll need to recreate*/
