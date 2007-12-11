@@ -27,6 +27,7 @@ using namespace std;
 class Serializable {
 public:
 	virtual void Save(ofstream &o)const =0;
+	virtual  ~Serializable(){}
 };
 
 #endif

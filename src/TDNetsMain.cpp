@@ -99,8 +99,8 @@ int main(int argc, char * const argv[]) {
 			useMCTraces,
 			alpha);
 
-	//int lastNumWrong, numSteps;
-	//float results=runExperimentTol(0.0001f,stepsPerBin,Alg,Env,true,numSteps,lastNumWrong);
+	int lastNumWrong, numSteps;
+	float results=runExperimentTol(0.0001f,stepsPerBin,Alg,Env,true,numSteps,lastNumWrong);
 	//	cout<<"Error with weight Feature length: "<<historyFeatureLength<<" weight Set length: "<<historyWeightsetLength<<" and depth: "<<Depth<< " is: "<<results<<endl;
 	//	cout<<" Last wrong "<<lastNumWrong<<" number of steps "<<numSteps<<endl;
 	exit(1);

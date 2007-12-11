@@ -26,6 +26,7 @@ using std::string;
 class Printable {
 public:
 	virtual string toString() const = 0; // = 0 means it is "pure virtual"
+	virtual ~Printable(){}
 };
 std::ostream & operator<<(std::ostream & os, const Printable& someClass);
 
