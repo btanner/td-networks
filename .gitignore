@@ -3,3 +3,4 @@ debug/
 profile/
 __pycache__/
 *.pyc
+results/data/*.log
