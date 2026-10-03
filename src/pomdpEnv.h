@@ -21,6 +21,8 @@
 #include <vector>
 #include <string>
 #include "Environment.h"
+#include <cstdio>
+#include <cstdlib>
 
 using std::vector;
 using std::string;

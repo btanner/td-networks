@@ -91,6 +91,8 @@ void Weights::addPredictionWeight(Node *theNode){
 }
 /*I think this just puts them in, I believe they are overwritten */
 void Weights::setupHistoryWeights(int historySize){
+	//A history feature length of 0 still yields feature index 0, so keep at least one slot
+	if(historySize<1) historySize=1;
 	for(int i=0;i<historySize;i++)
 		historyWeights.push_back(0.1f);
 	biasWeight=0.1f;

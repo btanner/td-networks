@@ -18,6 +18,7 @@
 
 #ifndef ENVIRONMENT_H_BRIAN
 #define ENVIRONMENT_H_BRIAN
+#include <cstdlib>
 #include "Printable.h"
 
 using std::string;

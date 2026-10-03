@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <sstream> 
 #include <string.h>
+#include <stdlib.h>
 
 #include "TDNet.h"
 #include "ringWorldEnv.h"
@@ -73,6 +74,7 @@ int main(int argc, char * const argv[]) {
 
 	//Use Monte Carlo networks with eligibility traces.  If you set this to false you'll use Vanilla TD-Networks
 	bool useMCTraces=true;
+	if (argc>1) useMCTraces=(atoi(argv[1])!=0);
 
 	//Choose what types of nodes you'll be using.  I can't remember if you can mix and match.
 	//The literature out there used SigmoidOneStep Nodes.  We later found (but never thoroughly investigated that cross entropy nodes were better)
