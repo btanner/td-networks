@@ -62,11 +62,28 @@ class TDNetLearner:
                     tgt=jnp.asarray(tgt), active=jnp.asarray(q.active, jnp.float32),
                     obs_bit=jnp.asarray(q.obs_bit))
 
-    def set_question(self, q: QuestionNet, state, reset_nodes=()):
+    def set_question(self, q: QuestionNet, state, reset_nodes=(), merges=(), folds=()):
         """Swap in a grown/pruned question network (same capacity).  Weights of `reset_nodes`
-        (their output rows and their input columns) are reset so re-used slots start fresh."""
+        (their output rows and their input columns) are reset so re-used slots start fresh.
+        Weight-preserving pruning: `merges` = [(i, j)] adds node i's input weights onto node j's
+        (exact when y_i == y_j); `folds` = [(i, c)] with c of shape (H,) adds c_h * (weights on y_i)
+        to the bias of weight set h (exact when y_i == c_h in context h)."""
         self.q = q
         self.tables = self.make_tables(q)
+        p = dict(state["params"])
+        off = 1 + self.F
+        for i, j in merges:
+            if self.cfg.model == "linear":
+                p["W"] = p["W"].at[:, :, off + j].add(p["W"][:, :, off + i])
+            else:
+                p["W1"] = p["W1"].at[:, off + j, :].add(p["W1"][:, off + i, :])
+        for i, c in folds:
+            c = jnp.asarray(c, jnp.float32)
+            if self.cfg.model == "linear":
+                p["W"] = p["W"].at[:, :, 0].add(p["W"][:, :, off + i] * c[:, None])
+            else:
+                p["b1"] = p["b1"] + p["W1"][:, off + i, :] * c[:, None]
+        state = dict(state, params=p)
         if len(reset_nodes):
             idx = jnp.asarray(np.array(reset_nodes, dtype=np.int32))
             p = dict(state["params"])
@@ -199,11 +216,14 @@ class TDNetLearner:
         ym = jnp.mean(y, axis=0)
         node_mean = dcy * state["node_mean"] + (1 - dcy) * ym
         node_var = dcy * state["node_var"] + (1 - dcy) * jnp.mean((y - state["node_mean"][None, :]) ** 2, axis=0)
-        # context-conditional statistics: mean / second moment of y given the weight-set index h, and the
-        # second-moment matrix y y^T (for redundancy detection when growing / pruning)
+        # context-conditional statistics: mean / second moment of the input y_{t-1} given the weight-set
+        # index h_t, and the second-moment matrix y y^T (for redundancy detection when growing / pruning)
+        # NOTE: conditioned on the *input* y_{t-1} given the context h_t it is used in, so that a node
+        # that is constant in context is exactly foldable into the bias of that weight set
+        y_prev = state["y"]
         cnt_h = jnp.zeros((self.H,)).at[h].add(1.0)
-        sum_h = jnp.zeros((self.H, self.N)).at[h].add(y)
-        sq_h = jnp.zeros((self.H, self.N)).at[h].add(y * y)
+        sum_h = jnp.zeros((self.H, self.N)).at[h].add(y_prev)
+        sq_h = jnp.zeros((self.H, self.N)).at[h].add(y_prev * y_prev)
         seen = (cnt_h > 0)[:, None]
         ym_h = jnp.where(seen, dcy * state["ym_h"] + (1 - dcy) * sum_h / jnp.maximum(cnt_h, 1)[:, None], state["ym_h"])
         ysq_h = jnp.where(seen, dcy * state["ysq_h"] + (1 - dcy) * sq_h / jnp.maximum(cnt_h, 1)[:, None], state["ysq_h"])

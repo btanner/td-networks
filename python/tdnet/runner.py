@@ -43,9 +43,9 @@ class Experiment:
         self.V = jnp.asarray(self.env.node_values(self.q.action_sequences()), jnp.float32)  # (N, S)
         self.L0 = jnp.asarray(level0_table(self.q, self.env.n_actions, self.env.n_obs_bits))
 
-    def set_question(self, q: QuestionNet, reset_nodes=()):
+    def set_question(self, q: QuestionNet, reset_nodes=(), merges=(), folds=()):
         self.q = q
-        self.state = self.learner.set_question(q, self.state, reset_nodes)
+        self.state = self.learner.set_question(q, self.state, reset_nodes, merges, folds)
         self.refresh_tables()
 
     def _run_chunk_impl(self, n_steps, state, s, belief, key, V, L0, tables, alpha):
