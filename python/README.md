@@ -46,3 +46,16 @@ Results (JSON + PNG) are written to `../results/`.
 2. **Don't normalise α by the number of features.**  The C++ divides α by `|x|`; that makes the
    single-stream 5-ring take 10× longer than the paper reports.  Without it, α=0.5 reaches
    RMSE < 0.05 in 9k steps, matching the paper.
+
+## Running on a GPU
+
+```
+pip install -U "jax[cuda12]"            # CUDA 12 wheels, needs a recent NVIDIA driver
+python3 -c "import jax; print(jax.devices())"   # should list a CudaDevice
+python3 experiments/exp_gpu.py bench    # ms/step for 62..510-node networks at 32..512 streams
+python3 experiments/exp_gpu.py fullrank # depth-8 tree (510 nodes) on the bit-to-bit world
+python3 experiments/exp_gpu.py grow     # grower with capacity 512
+```
+Nothing in the code is device specific; the only GPU-specific line is forcing full-precision
+matmuls (`jax_default_matmul_precision = "highest"`), because the default TF32 path adds noise to
+networks whose inputs are sigmoid outputs in [0, 1].
