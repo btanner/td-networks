@@ -1,0 +1,17 @@
+ring5        history k=1: final 1-step oracle RMSE 0.3859  |err| 0.3000  table rows 4
+ring5        history k=2: final 1-step oracle RMSE 0.2567  |err| 0.1338  table rows 16
+ring5        history k=3: final 1-step oracle RMSE 0.2400  |err| 0.1170  table rows 64
+ring5        history k=4: final 1-step oracle RMSE 0.1678  |err| 0.0585  table rows 256
+ring5        history k=6: final 1-step oracle RMSE 0.1110  |err| 0.0270  table rows 4096
+ring8        history k=1: final 1-step oracle RMSE 0.3244  |err| 0.2138  table rows 4
+ring8        history k=2: final 1-step oracle RMSE 0.2238  |err| 0.1040  table rows 16
+ring8        history k=4: final 1-step oracle RMSE 0.1883  |err| 0.0744  table rows 256
+ring8        history k=6: final 1-step oracle RMSE 0.1652  |err| 0.0578  table rows 4096
+ring8        history k=8: final 1-step oracle RMSE 0.1454  |err| 0.0453  table rows 65536
+cycle6       history k=1: final 1-step oracle RMSE 0.3609  |err| 0.2667  table rows 2
+cycle6       history k=2: final 1-step oracle RMSE 0.3500  |err| 0.2500  table rows 4
+cycle6       history k=3: final 1-step oracle RMSE 0.3305  |err| 0.2222  table rows 8
+cycle6       history k=4: final 1-step oracle RMSE 0.2855  |err| 0.1667  table rows 16
+cycle6       history k=5: final 1-step oracle RMSE 0.0000  |err| 0.0000  table rows 32
+bit2bit104   history k=1: final 1-step oracle RMSE 0.3716  |err| 0.2781  table rows 4
+bit2bit104   history k=2: final 1-step oracle RMSE 0.3529  |err| 0.2513  table rows 16
