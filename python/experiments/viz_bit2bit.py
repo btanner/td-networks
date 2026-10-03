@@ -6,6 +6,13 @@ from tdnet.runner import Experiment
 from tdnet.viz import resolve, rollout, frames, draw_frame
 import json, os, sys
 
+def conv(o):
+    if isinstance(o, (np.integer,)): return int(o)
+    if isinstance(o, (np.floating,)): return float(o)
+    if isinstance(o, np.ndarray): return o.tolist()
+    raise TypeError(type(o))
+
+
 STEPS = int(sys.argv[1]) if len(sys.argv) > 1 else 400_000
 VIZ = os.path.join(ROOT, "results", "viz"); os.makedirs(VIZ, exist_ok=True)
 log = logger()
@@ -33,10 +40,12 @@ for name, envkw, q, cfg in configs:
     for ax, k in zip(axes.flat, range(0, 160, 20)):
         draw_frame(ax, fr[k])
     fig.suptitle(name, x=0.01, ha="left", fontsize=11)
-    fig.tight_layout(); fig.savefig(os.path.join(FIGS, "viz_" + name.split(",")[0].replace(" ", "_").replace("/", "-") + ".png")); plt.close(fig)
+    fig.tight_layout(); fig.savefig(os.path.join(FIGS, "viz_" + name.replace(", ", "_").replace(" ", "_").replace("/", "-").replace("(", "").replace(")", "") + ".png")); plt.close(fig)
 
 tpl = open(os.path.join(ROOT, "python", "tdnet", "viz_template.html")).read()
-page = tpl.replace("/*DATA*/{}", json.dumps(datasets, separators=(",", ":")))
+blob = json.dumps(datasets, separators=(",", ":"), default=conv)
+open(os.path.join(VIZ, "frames.json"), "w").write(blob)
+page = tpl.replace("/*DATA*/{}", blob)
 open(os.path.join(VIZ, "bit2bit_viewer_body.html"), "w").write(page)
 open(os.path.join(VIZ, "bit2bit_viewer.html"), "w").write('<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + page + "\n</head></html>" if False else '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>\n' + page + "\n</body></html>")
 log(f"wrote viewer with {sum(len(d['frames']) for d in datasets.values())} frames, {os.path.getsize(os.path.join(VIZ, 'bit2bit_viewer.html'))/1e6:.1f} MB")
