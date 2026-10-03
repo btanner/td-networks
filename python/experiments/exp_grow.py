@@ -69,16 +69,26 @@ h = run_grown(env, capacity=64, max_depth=8, rounds=40, round_steps=20_000, tag=
 c1.append(("grown, no pruning (cap 64)", h["step"], h["d1"])); c2.append((c1[-1][0], h["step"], h["n"]))
 plot_grow(c1, c2, "8-state ring world", "grow_ring8.png")
 
-# ---- bit-to-bit gridworld ----
+# ---- symmetric empty room: PSR rank 7, easy ----
+env = gridworld(MAPS["room4"], name="room4")
+c1, c2 = [], []
+for depth in [2, 3, 4]:
+    h = run_fixed(env, symmetric_tree(2, depth), 600_000, 20_000, depth, f"sym depth {depth}")
+    results[f"room4_sym{depth}"] = h; c1.append((f"fixed symmetric depth {depth} ({h['n'][0]} nodes)", h["step"], h["d1"])); c2.append((c1[-1][0], h["step"], h["n"]))
+h = run_grown(env, capacity=48, max_depth=6, rounds=30, round_steps=20_000, tag="cap 48"); results["room4_grown"] = h
+c1.append(("grown + pruned (cap 48)", h["step"], h["d1"])); c2.append((c1[-1][0], h["step"], h["n"]))
+plot_grow(c1, c2, "Empty 4x4 room (64 states, PSR rank 7)", "grow_room4.png")
+
+# ---- bit-to-bit gridworld: PSR rank 104, needs tests of length 8 ----
 env = gridworld(MAPS["ijcai26"], name="bit2bit104")
 c1, c2 = [], []
-for depth in [3, 4, 5, 6]:
-    h = run_fixed(env, symmetric_tree(2, depth), 2_000_000, 50_000, depth, f"sym depth {depth}")
+for depth, steps in [(4, 2_000_000), (5, 2_000_000), (6, 2_000_000), (7, 600_000)]:
+    h = run_fixed(env, symmetric_tree(2, depth), steps, 40_000, depth, f"sym depth {depth}")
     results[f"grid_sym{depth}"] = h; c1.append((f"fixed symmetric depth {depth} ({h['n'][0]} nodes)", h["step"], h["d1"])); c2.append((c1[-1][0], h["step"], h["n"]))
-h = run_grown(env, capacity=128, max_depth=6, rounds=40, round_steps=50_000, tag="cap 128"); results["grid_grown"] = h
-c1.append(("grown + pruned (cap 128)", h["step"], h["d1"])); c2.append((c1[-1][0], h["step"], h["n"]))
-h = run_grown(env, capacity=128, max_depth=6, rounds=40, round_steps=50_000, tag="cap 128 no prune", prune=False); results["grid_grown_noprune"] = h
-c1.append(("grown, no pruning (cap 128)", h["step"], h["d1"])); c2.append((c1[-1][0], h["step"], h["n"]))
+h = run_grown(env, capacity=160, max_depth=8, rounds=50, round_steps=40_000, tag="cap 160 depth<=8"); results["grid_grown"] = h
+c1.append(("grown + pruned (cap 160, depth <= 8)", h["step"], h["d1"])); c2.append((c1[-1][0], h["step"], h["n"]))
+h = run_grown(env, capacity=160, max_depth=8, rounds=50, round_steps=40_000, tag="cap 160 no prune", prune=False); results["grid_grown_noprune"] = h
+c1.append(("grown, no pruning (cap 160)", h["step"], h["d1"])); c2.append((c1[-1][0], h["step"], h["n"]))
 plot_grow(c1, c2, "Bit-to-bit gridworld (104 states)", "grow_grid.png")
 
 save_json("exp_grow", {k: {kk: vv for kk, vv in v.items() if kk not in ("node_mse",)} for k, v in results.items()})
