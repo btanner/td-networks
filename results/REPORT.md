@@ -5,7 +5,36 @@ raw curves are in `results/data/*.json`, figures in `results/figs/`.*
 
 ## 1. Summary
 
-**[filled in at the end]**
+* The 2005 C++ builds and runs again (two missing includes, one real heap-corruption bug).
+  The ICML'05 pseudo-code has two defects relative to its own equations; the C++ has one of them.
+* The JAX port replaces eligibility traces with an exact **forward-view λ-return** (the question
+  network has bounded depth, so every target is known D steps later). It is a handful of gathers
+  and one einsum per step, runs 32 streams at 20 µs/step on CPU for the paper-sized networks, and
+  is verified against a brute-force implementation of Eq. 6. Nodes live in a fixed capacity with
+  a mask, so growing and pruning never recompile.
+* **All headline results of the three papers reproduce**: λ ordering on the 5-ring (9k single-stream
+  steps to RMSE .05 at λ=1, as published), TD(0) failing and λ>0 succeeding on the 8-ring sparse
+  net and the 6-cycle, history rescuing TD(0) on the cycle.
+* Two corrections to the published setup: the feature vector as written (single weight matrix)
+  **cannot represent action-gated updates** and does not learn the ring world; the C++ actually
+  used a weight set per (a_{t-1}, o_t). And the C++'s α/|x| normalisation slows learning ~16×.
+* **The bit-to-bit gridworld is a representation problem first**: its linear-PSR dimension is 104
+  (every state) and separating the states needs tests of length 8. No fixed tree below 510 nodes
+  can hold the state, and in practice nothing we tried solves it. Best results: a 64-unit MLP
+  answer network on depth-4 questions (next-observation RMSE .197, matching a 65k-row 8-step
+  history table with 30 nodes). Linear networks plateau at .24–.30; TD(0) is clearly worse than
+  TD(1); deeper fixed trees do not help and diverge at α=.5.
+* Richer sensors help a lot (3 bits: 1-step error .04–.05 vs .13), more actions do not; a bigger but
+  open map (204 states) is easy, a maze (324) is as hard as the small map. Stochastic motion and
+  noisy sensors are handled gracefully against the exact belief-state oracle; the MLP answer
+  network roughly halves the linear network's error on every stochastic variant.
+* **Growing + pruning works where state is reachable and stalls where it is not.** On the 8-ring it
+  discovers the minimal 8-question model (the paper hand-designed 16); on the empty room it keeps
+  11 of 33 questions at the accuracy of the 30-node tree. On the bit-to-bit world it fills its
+  capacity under "stuck" nodes without finding a core and does not beat a 30-node tree. The
+  pruning rules that finally worked (prune only *answered* leaves; test redundancy by mean squared
+  difference; condition "constant" statistics on the *input*; make every prune weight-preserving)
+  are themselves a result: three simpler versions destroyed working networks.
 
 ## 2. Getting the 2005 C++ running
 
@@ -282,13 +311,40 @@ feature. Conditioning on the *input* and making every prune weight-preserving fi
 |---|---|---|---|
 | 8-ring | depth 4 (30) .0005; depth 6 (126) .0003; paper's sparse (16) .0005 | **8 nodes**, .0007 | 64 nodes (capacity), .0004 |
 | empty 4x4 room | depth 2 (6) .22; depth 3 (14) .12; depth 4 (30) .0012 | **11 nodes**, .0019 | |
-| bit-to-bit (104) | **[pending]** | **[pending]** | **[pending]** |
+| bit-to-bit (104), α=.1 | depth 4 (30) .234; depth 5 (62) .280; depth 6 (126) .278; depth 7 (254) .320 | 159 nodes, depth 7, .266 | *(still running when this was written; see `exp_grow.json`)* |
 
 The grown 8-ring network is exactly the minimal model: L, LL, LLL, LLLL and R, RR, RRR (LLLL =
 RRRR), eight questions where the ICML paper hand-designed sixteen. On the room it keeps 11 of the
 33 questions it tried (F, R, FF, RF, RR, RRR, RRF, RRFF, RFF, RRRF, RRRR) at the same accuracy as
-the 30-node tree. Figures: `figs/grow_ring8.png`, `figs/grow_room4.png`, `figs/grow_grid.png`.
+the 30-node tree.
+
+On the bit-to-bit world the grower does **not** crack the problem. It fills its 160-node capacity
+in ~1.8M steps with a network that is a full tree to depth 4 (30 nodes) and then sparse: 29/32
+nodes at depth 5, 53/64 at depth 6, 47/128 at depth 7. Almost all growth there is triggered by
+"stuck", not "answered": with insufficient state nothing deep becomes answerable, so the grower
+has no signal for *which* deep questions to add and ends up approximating the full tree. Its
+next-observation RMSE (.266) is no better than the 30-node fixed tree (.234). Over the whole
+experiment (ring, room, gridworld) 79 prunes were redundancy merges, 39 were constant-in-context
+folds and 2 were unlearnable; on the gridworld pruning is rare, because few deep nodes ever
+become answered. Figures: `figs/grow_ring8.png`, `figs/grow_room4.png`, `figs/grow_grid.png`.
 
 ## 11. What I would do next
 
-**[filled in at the end]**
+1. **Run the full-rank network on a GPU.** The depth-8 tree (510 nodes, rank 104) is the first
+   fixed network that can represent the bit-to-bit world; at 18 ms/step on this CPU it needs five
+   hours per million steps, on a GPU it is minutes. This is the single cleanest test of whether
+   the learning algorithm or the question network is the bottleneck. The code needs no changes.
+2. **A better growth signal.** "Stuck" says *that* state is missing, not *which* question supplies
+   it. A direct usefulness test is cheap in the forward view: ablate a candidate node's input
+   column and measure the change in the λ-return loss on the ring buffer, or score candidates by
+   how much they reduce the error of the depth-1 nodes. Grow the few with the largest effect.
+3. **MLP answer network inside the grower**, with Adam; it was the best learner everywhere, and
+   the grower currently only uses the linear one.
+4. **Factor the gating.** A weight set per (a,o) history grows as (|A||O|)^k. A multiplicative
+   (bilinear) layer action × previous-predictions would give the same gating with |A| factors, and
+   leave observations and history as additive features.
+5. **Sort out λ at intermediate values with many streams.** Summed multi-stream updates act as a
+   B× step size; λ=0.5 solves the cycle world single-stream but not with 16 streams. Either scale
+   α by 1/B and accept slower per-stream progress, or use Adam for the linear model too.
+6. **Curriculum from rich to poor sensors**: the 3-bit sensor is nearly solved at depth 2; the
+   predictions it learns are exactly the state the 1-bit agent lacks.
