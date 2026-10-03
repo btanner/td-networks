@@ -1,0 +1,125 @@
+<title>Bit-to-bit Prediction Map</title>
+<style>
+/* layout: a fixed square map on the left, a scrolling inspector on the right; stacks on phones */
+:root{--bg:#f4f6f8;--panel:#ffffff;--fg:#17222e;--muted:#5d6b7a;--line:#d7dde3;--wall:#1b2a3b;--truth:#c3cad1;
+      --pred:29,86,180;--conflict:#e07a1f;--agent:#17222e;--font:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1419;--panel:#161d25;--fg:#e8edf2;--muted:#9aa7b4;--line:#2a343f;--wall:#e8edf2;--truth:#3a4652;--pred:110,160,240;--conflict:#f4a259;--agent:#e8edf2;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1419;--panel:#161d25;--fg:#e8edf2;--muted:#9aa7b4;--line:#2a343f;--wall:#e8edf2;--truth:#3a4652;--pred:110,160,240;--conflict:#f4a259;--agent:#e8edf2;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);padding-inline:16px;padding-block:12px;margin:0}
+h1{font-size:1.15rem;font-weight:600;margin:0 0 2px;text-wrap:balance}
+.sub{color:var(--muted);font-size:.85rem;margin:0 0 12px;max-width:70ch}
+.wrap{display:grid;grid-template-columns:minmax(280px,560px) minmax(260px,1fr);gap:16px;align-items:start}
+@media (max-width:760px){.wrap{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;min-width:0}
+canvas{width:100%;height:auto;display:block;border-radius:4px;background:var(--panel)}
+.controls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px;font-size:.85rem}
+.controls label{display:inline-flex;gap:6px;align-items:center}
+button{font:inherit;font-size:.85rem;padding:4px 10px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:4px;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid rgb(var(--pred));outline-offset:2px}
+input[type=range]{width:160px}
+select{font:inherit;font-size:.85rem;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:3px 6px}
+.stat{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.85rem;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:22px;height:4px;border-radius:2px}
+table{border-collapse:collapse;width:100%;font-size:.82rem;font-variant-numeric:tabular-nums}
+th{text-align:left;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);padding:4px 6px}
+td{padding:3px 6px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+td.name{font-family:var(--font)}
+tr.hl td{background:rgba(var(--pred),.12)}
+.bar{display:inline-block;height:8px;background:rgb(var(--pred));border-radius:2px;vertical-align:middle}
+.truthbar{display:inline-block;height:8px;background:var(--truth);border-radius:2px;vertical-align:middle;margin-left:2px}
+.hint{font-size:.8rem;color:var(--muted);margin:8px 0 0}
+.tip{position:fixed;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:.78rem;max-width:280px;box-shadow:0 2px 8px rgba(0,0,0,.12);z-index:5}
+.tip b{font-family:var(--mono)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono&display=swap">
+<h1>Bit-to-bit prediction map</h1>
+<p class="sub">The agent (triangle) sits at the centre facing up. Every question the TD network asks is an action sequence ending in a sensor bit; resolved through the true outcomes of those actions it names one wall segment. Each segment is drawn with the network's predicted probability of a wall as its darkness, over the true walls in grey. Several questions can land on the same segment: its thickness is how many, and an orange dot marks disagreement.</p>
+<div class="wrap">
+  <div class="panel">
+    <canvas id="map" width="560" height="560" aria-label="egocentric prediction map"></canvas>
+    <div class="controls">
+      <label>Network <select id="dataset"></select></label>
+      <button id="play" type="button">Play</button>
+      <button id="prev" type="button">&larr;</button>
+      <input id="step" type="range" min="0" max="0" value="0" aria-label="time step">
+      <button id="next" type="button">&rarr;</button>
+      <span class="stat" id="stat"></span>
+    </div>
+    <div class="controls">
+      <label><input id="truth" type="checkbox" checked> true walls</label>
+      <label><input id="paths" type="checkbox"> paths on hover</label>
+      <label><input id="allo" type="checkbox"> fixed map frame</label>
+      <label>radius <input id="radius" type="range" min="2" max="8" value="4"></label>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:rgb(var(--pred))"></i> predicted wall (darkness = probability)</span>
+      <span><i class="sw" style="background:var(--truth)"></i> true wall</span>
+      <span><i class="sw" style="background:var(--conflict);width:8px;height:8px;border-radius:50%"></i> questions disagree by &gt; 0.25</span>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="stat" id="frameinfo"></div>
+    <table id="tbl"><thead><tr><th>question</th><th>pred</th><th>truth</th><th>|err|</th></tr></thead><tbody></tbody></table>
+    <p class="hint">Question names read left to right: F forward, R turn right, L turn left, B back; a trailing &lt; or &gt; means the left or right sensor bit. Hover a segment on the map to see which questions landed on it.</p>
+  </div>
+</div>
+<div class="tip" id="tip" hidden></div>
+<script>
+const DATA = /*DATA*/{};
+const $ = id => document.getElementById(id);
+const sel = $('dataset'); Object.keys(DATA).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = k; sel.appendChild(o); });
+let frames = [], t = 0, playing = false, timer = null, hover = null;
+const cv = $('map'), ctx = cv.getContext('2d');
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function load(){ frames = DATA[sel.value].frames; $('step').max = frames.length - 1; t = Math.min(t, frames.length - 1); $('step').value = t; draw(); }
+function rot(p, d){ const [r, c] = p; if (d === 0) return [r, c]; if (d === 1) return [-c, r]; if (d === 2) return [-r, -c]; return [c, -r]; }
+function unrot(p, d){ // egocentric -> fixed-frame relative to the agent cell
+  const [r, c] = p; if (d === 0) return [r, c]; if (d === 1) return [c, -r]; if (d === 2) return [-r, -c]; return [-c, r]; }
+function seg(c1, c2){ const [r1, a] = c1, [r2, b] = c2; if (r1 === r2) { const x = (a + b) / 2; return [[x, r1 - .5], [x, r1 + .5]]; } const y = (r1 + r2) / 2; return [[a - .5, y], [a + .5, y]]; }
+let hit = [];
+function draw(){
+  const f = frames[t]; if (!f) return;
+  const R = +$('radius').value, W = cv.width, S = W / (2 * R + 1), allo = $('allo').checked, d = f.pose[2];
+  const tr = p => allo ? unrot(p, d) : p;
+  const X = ([r, c]) => [(c + R + .5) * S, (r + R + .5) * S];
+  ctx.clearRect(0, 0, W, W); ctx.lineCap = 'butt'; hit = [];
+  ctx.strokeStyle = css('--line'); ctx.lineWidth = 1;
+  for (let i = 0; i <= 2 * R + 1; i++) { ctx.beginPath(); ctx.moveTo(i * S, 0); ctx.lineTo(i * S, W); ctx.moveTo(0, i * S); ctx.lineTo(W, i * S); ctx.globalAlpha = .35; ctx.stroke(); ctx.globalAlpha = 1; }
+  if ($('truth').checked) { ctx.strokeStyle = css('--truth'); ctx.lineWidth = S * .16;
+    for (const w of f.walls) { const [p, q] = seg(tr(w[0]), tr(w[1])); const [x1, y1] = X(p), [x2, y2] = X(q); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); } }
+  const pred = css('--pred');
+  for (const e of f.edges) { const [p, q] = seg(tr(e.cells[0]), tr(e.cells[1])); const [x1, y1] = X(p), [x2, y2] = X(q);
+    ctx.strokeStyle = `rgba(${pred},${Math.max(e.mean, .05)})`; ctx.lineWidth = S * (.08 + .05 * Math.log1p(e.n));
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    if (e.max - e.min > .25) { ctx.fillStyle = css('--conflict'); ctx.beginPath(); ctx.arc((x1 + x2) / 2, (y1 + y2) / 2, S * .09, 0, 7); ctx.fill(); }
+    hit.push({ x: (x1 + x2) / 2, y: (y1 + y2) / 2, e }); }
+  if (hover && $('paths').checked) { ctx.strokeStyle = css('--conflict'); ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+    for (const qn of hover.e.questions) { ctx.beginPath(); qn.path.forEach((p, i) => { const [x, y] = X(tr([p[0], p[1]])); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); } ctx.setLineDash([]); }
+  // agent
+  const [ax, ay] = X([0, 0]); const hd = allo ? d : 0; ctx.fillStyle = css('--agent'); ctx.save(); ctx.translate(ax, ay); ctx.rotate(hd * Math.PI / 2);
+  ctx.beginPath(); ctx.moveTo(0, -S * .32); ctx.lineTo(S * .24, S * .26); ctx.lineTo(-S * .24, S * .26); ctx.closePath(); ctx.fill(); ctx.restore();
+  $('stat').textContent = `t=${f.t}  obs ${f.obs}  next ${f.action}  RMSE ${f.rmse.toFixed(3)}`;
+  $('frameinfo').textContent = `${f.edges.length} segments from ${f.edges.reduce((s, e) => s + e.n, 0)} questions; pose row ${f.pose[0]} col ${f.pose[1]} heading ${['up','right','down','left'][d]}`;
+  const tb = $('tbl').querySelector('tbody'); tb.innerHTML = '';
+  const rows = []; f.edges.forEach(e => e.questions.forEach(q => rows.push({ q, e })));
+  rows.sort((a, b) => Math.abs(b.q.y - b.q.truth) - Math.abs(a.q.y - a.q.truth));
+  for (const { q, e } of rows) { const trr = document.createElement('tr'); if (hover && hover.e === e) trr.className = 'hl';
+    trr.innerHTML = `<td class="name">${q.name}</td><td><i class="bar" style="width:${Math.round(q.y * 40)}px"></i> ${q.y.toFixed(2)}</td><td><i class="truthbar" style="width:${Math.round(q.truth * 40)}px"></i> ${q.truth.toFixed(2)}</td><td>${Math.abs(q.y - q.truth).toFixed(2)}</td>`; tb.appendChild(trr); }
+}
+cv.addEventListener('mousemove', ev => { const b = cv.getBoundingClientRect(), x = (ev.clientX - b.left) * cv.width / b.width, y = (ev.clientY - b.top) * cv.height / b.height;
+  let best = null, bd = 1e9; for (const h of hit) { const dd = (h.x - x) ** 2 + (h.y - y) ** 2; if (dd < bd) { bd = dd; best = h; } }
+  const S = cv.width / (2 * (+$('radius').value) + 1); hover = (best && bd < (S * .5) ** 2) ? best : null; draw();
+  const tip = $('tip'); if (hover) { tip.hidden = false; tip.style.left = (ev.clientX + 12) + 'px'; tip.style.top = (ev.clientY + 12) + 'px';
+    tip.innerHTML = `<div>mean <b>${hover.e.mean.toFixed(2)}</b> truth <b>${hover.e.truth.toFixed(2)}</b> (${hover.e.n} question${hover.e.n > 1 ? 's' : ''})</div>` + hover.e.questions.map(q => `<div><b>${q.name}</b> ${q.y.toFixed(2)}</div>`).join(''); } else tip.hidden = true; });
+cv.addEventListener('mouseleave', () => { hover = null; $('tip').hidden = true; draw(); });
+$('step').addEventListener('input', e => { t = +e.target.value; draw(); });
+$('prev').onclick = () => { t = Math.max(0, t - 1); $('step').value = t; draw(); };
+$('next').onclick = () => { t = Math.min(frames.length - 1, t + 1); $('step').value = t; draw(); };
+$('play').onclick = () => { playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; clearInterval(timer); if (playing) timer = setInterval(() => { t = (t + 1) % frames.length; $('step').value = t; draw(); }, 600); };
+['truth', 'paths', 'allo', 'radius'].forEach(id => $(id).addEventListener('input', draw));
+sel.addEventListener('change', load);
+load();
+</script>
