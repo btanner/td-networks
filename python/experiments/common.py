@@ -42,7 +42,8 @@ def plot_curves(curves, title, fname, ylabel="oracle RMSE (all nodes)", logx=Tru
     fig, ax = plt.subplots(figsize=(7, 4), dpi=130)
     for k, (label, xs, ys) in enumerate(curves):
         ax.plot(xs, ys, color=SERIES[k % len(SERIES)], label=label)
-        ax.annotate(label, (xs[-1], ys[-1]), xytext=(4, 0), textcoords="offset points", fontsize=8, color=INK2, va="center")
+    if ymax is not None and max(max(c[2]) for c in curves) > ymax:
+        ymax = min(1.0, 1.05 * max(max(c[2]) for c in curves))
     if ref is not None:
         ax.axhline(ref, color=MUTED, lw=0.8, ls="--")
         ax.annotate(f"RMSE = {ref}", (ax.get_xlim()[0] if not logx else min(c[1][0] for c in curves), ref),
