@@ -53,9 +53,9 @@ class Grower:
     def round(self):
         q, ex = self.ex.q, self.ex
         err, cnt, var_h, msd = self.stats()
-        active = np.flatnonzero(q.active)
+        active = [int(i) for i in np.flatnonzero(q.active)]
         depths = q.depths()
-        leaves = [i for i in active if len(q.children(i)) == 0]
+        leaves = [int(i) for i in active if len(q.children(i)) == 0]
         pruned, reasons = [], {}
         answered = err < self.tau_grow
         self.round_no += 1
@@ -78,7 +78,7 @@ class Grower:
                 elif self.age[i] >= self.min_age_bad and err[i] > self.tau_bad and answered[q.parent[i]]:
                     reason = "unlearnable"
                 if reason:
-                    pruned.append(i); reasons[i] = reason
+                    pruned.append(int(i)); reasons[int(i)] = reason
             for i in pruned:
                 self.tombstones[(int(q.parent[i]), int(q.cond[i]))] = self.round_no if reasons[i] == "unlearnable" else None
                 q.remove(i); self.age[i] = 0
@@ -96,8 +96,8 @@ class Grower:
             if free < len(kids):
                 break
             for a in kids:
-                new_nodes.append(q.add(a, i))
-            grown.append(i)
+                new_nodes.append(int(q.add(a, i)))
+            grown.append(int(i))
         ex.set_question(q, reset_nodes=pruned + new_nodes, merges=merges, folds=folds)
         self.age[q.active] += 1
         info = dict(step=ex.steps_done, n_active=q.n_active, grown=grown, new=new_nodes, pruned=pruned, reasons=reasons,
