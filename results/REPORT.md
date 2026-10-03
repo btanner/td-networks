@@ -311,7 +311,7 @@ feature. Conditioning on the *input* and making every prune weight-preserving fi
 |---|---|---|---|
 | 8-ring | depth 4 (30) .0005; depth 6 (126) .0003; paper's sparse (16) .0005 | **8 nodes**, .0007 | 64 nodes (capacity), .0004 |
 | empty 4x4 room | depth 2 (6) .22; depth 3 (14) .12; depth 4 (30) .0012 | **11 nodes**, .0019 | |
-| bit-to-bit (104), α=.1 | depth 4 (30) .234; depth 5 (62) .280; depth 6 (126) .278; depth 7 (254) .320 | 159 nodes, depth 7, .266 | *(still running when this was written; see `exp_grow.json`)* |
+| bit-to-bit (104), α=.1 | depth 4 (30) .234; depth 5 (62) .280; depth 6 (126) .278; depth 7 (254) .320 | 159 nodes, depth 7, .266 | 160 nodes (capacity), depth 7, .265 |
 
 The grown 8-ring network is exactly the minimal model: L, LL, LLL, LLLL and R, RR, RRR (LLLL =
 RRRR), eight questions where the ICML paper hand-designed sixteen. On the room it keeps 11 of the
