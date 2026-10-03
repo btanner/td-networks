@@ -1,0 +1,23 @@
+ring5    sym d=3            lam=0.0  hf=0 hw=1 B=16: final RMSE 0.0025  1-step 0.0013  first step with RMSE<.05: 5000
+ring5    sym d=3            lam=0.25 hf=0 hw=1 B=16: final RMSE 0.0024  1-step 0.0014  first step with RMSE<.05: 5000
+ring5    sym d=3            lam=0.5  hf=0 hw=1 B=16: final RMSE 0.0022  1-step 0.0014  first step with RMSE<.05: 5000
+ring5    sym d=3            lam=0.75 hf=0 hw=1 B=16: final RMSE 0.0021  1-step 0.0014  first step with RMSE<.05: 5000
+ring5    sym d=3            lam=1.0  hf=0 hw=1 B=16: final RMSE 0.0019  1-step 0.0014  first step with RMSE<.05: 5000
+ring5    paper features, linear lam=1.0  hf=1 hw=0 B=16: final RMSE 0.2942  1-step 0.1013  first step with RMSE<.05: None
+ring5 paper features, MLP-32 alpha=0.1: final RMSE 0.0015
+ring5    sym d=3 B=1        lam=1.0  hf=0 hw=1 B=1: final RMSE 0.0143  1-step 0.0104  first step with RMSE<.05: 9000
+ring5    sym d=3 B=1        lam=0.0  hf=0 hw=1 B=1: final RMSE 0.0081  1-step 0.0043  first step with RMSE<.05: 45000
+ring8    sparse d=8         lam=0.0  hf=0 hw=1 B=16: final RMSE 0.3039  1-step 0.1644  first step with RMSE<.05: None
+ring8    sparse d=8         lam=0.5  hf=0 hw=1 B=16: final RMSE 0.0023  1-step 0.0007  first step with RMSE<.05: 50000
+ring8    sparse d=8         lam=0.9  hf=0 hw=1 B=16: final RMSE 0.0020  1-step 0.0007  first step with RMSE<.05: 30000
+ring8    sparse d=8         lam=1.0  hf=0 hw=1 B=16: final RMSE 0.0019  1-step 0.0007  first step with RMSE<.05: 30000
+cycle6   chain d=5          lam=0.0  hf=1 hw=0 B=16: final RMSE 0.3637  1-step 0.2306  first step with RMSE<.05: None
+cycle6   chain d=5          lam=0.25 hf=1 hw=0 B=16: final RMSE 0.3686  1-step 0.2326  first step with RMSE<.05: None
+cycle6   chain d=5          lam=0.5  hf=1 hw=0 B=16: final RMSE 0.3601  1-step 0.2075  first step with RMSE<.05: None
+cycle6   chain d=5          lam=0.75 hf=1 hw=0 B=16: final RMSE 0.0017  1-step 0.0009  first step with RMSE<.05: 5000
+cycle6   chain d=5          lam=1.0  hf=1 hw=0 B=16: final RMSE 0.0015  1-step 0.0010  first step with RMSE<.05: 2500
+cycle6   chain d=5 TD(0)    lam=0.0  hf=1 hw=0 B=16: final RMSE 0.3637  1-step 0.2306  first step with RMSE<.05: None
+cycle6   chain d=5 TD(0)    lam=0.0  hf=2 hw=0 B=16: final RMSE 0.3829  1-step 0.2220  first step with RMSE<.05: None
+cycle6   chain d=5 TD(0)    lam=0.0  hf=3 hw=0 B=16: final RMSE 0.3804  1-step 0.1789  first step with RMSE<.05: None
+cycle6   chain d=5 TD(0)    lam=0.0  hf=4 hw=0 B=16: final RMSE 0.0018  1-step 0.0008  first step with RMSE<.05: 5000
+done
