@@ -25,9 +25,10 @@ raw curves are in `results/data/*.json`, figures in `results/figs/`.*
   history table with 30 nodes). Linear networks plateau at .24–.30; TD(0) is clearly worse than
   TD(1); deeper fixed trees do not help and diverge at α=.5.
 * Richer sensors help a lot (3 bits: 1-step error .04–.05 vs .13), more actions do not; a bigger but
-  open map (204 states) is easy, a maze (324) is as hard as the small map. Stochastic motion and
-  noisy sensors are handled gracefully against the exact belief-state oracle; the MLP answer
-  network roughly halves the linear network's error on every stochastic variant.
+  open map (204 states) is easy, a maze (324) is as hard as the small map. On maps that are solved
+  deterministically, sensor noise costs almost nothing (empty room .002 → .015) while motion slip
+  costs more (→ .095 linear, .060 MLP); the MLP answer network roughly halves the linear
+  network's error on every stochastic variant of the hard map.
 * **Growing + pruning works where state is reachable and stalls where it is not.** On the 8-ring it
   discovers the minimal 8-question model (the paper hand-designed 16); on the empty room it keeps
   11 of 33 questions at the accuracy of the 30-node tree. On the bit-to-bit world it fills its
@@ -284,6 +285,39 @@ roughly halves the error. The 1-step |err| column is dominated by irreducible se
 | slip + noisy sensor | .335 | .350 | .356 | **.146** |
 
 Figures: `figs/big_maps_1bit.png`, `figs/big_stochastic.png`.
+
+### 9.1 Does stochasticity itself hurt? (maps that are solved deterministically)
+
+The 26-cell map confounds stochasticity with its representation problem, so the same variants
+were run on maps a depth-4 tree does solve. Oracle = exact belief-state prediction; 32 streams,
+400k steps; linear at α=0.1, MLP-64 with Adam. Script: `exp_stochastic_easy.py`.
+
+| variant | empty room, linear | empty room, MLP | two rooms, linear | two rooms, MLP |
+|---|---|---|---|---|
+| deterministic | .002 | .000 | .093 | .092 |
+| noisy sensor (.925 / .9) | .015 | .011 | .132 | .150 |
+| motion slip 0.1 (+0.02 double) | .095 | .060 | .129 | .102 |
+| slip + noisy sensor | .134 | .088 | .128 | .099 |
+
+Sensor noise is nearly free on the empty room (the questions still have crisp answers, the
+agent just sees them through a noisy channel, and the belief oracle expects exactly that
+blurring). Motion slip is what costs: a question like "wall after FF" stops naming one segment
+and becomes a mixture over where the agent actually ended up, and the linear-sigmoid combination
+of previous predictions represents mixtures poorly; the MLP recovers about a third of the loss.
+On the two-rooms map everything sits near .10-.15 because its deterministic floor is already
+.09. Figures: `figs/stochastic_room4.png`, `figs/stochastic_tworooms.png`.
+
+### 9.2 Prediction maps (visualiser)
+
+`python/tdnet/viz.py` resolves every question through the true outcomes of its actions to one
+wall segment and draws the predicted probability as the segment's darkness over the true walls;
+questions that land on the same segment are aggregated (mean, count as thickness, a marker when
+they disagree by more than .25). `results/viz/bit2bit_viewer.html` steps through 160 moves for
+three trained networks with egocentric, agent-centred and whole-map views and animated
+transitions (the pose change is ground truth, so turns rotate the map and blocked moves do not
+shift it). The disagreement markers are an oracle-free map of where the network's state is
+inconsistent (F, FF, FFF from a wall-facing pose must agree), which could feed the grower.
+Frame strips: `figs/viz_*.png`.
 
 ## 10. Growing and pruning the question network
 
